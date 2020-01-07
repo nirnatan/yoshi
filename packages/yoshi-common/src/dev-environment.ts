@@ -3,6 +3,7 @@ import createStore, { Store } from 'unistore';
 import clearConsole from 'react-dev-utils/clearConsole';
 import formatWebpackMessages from 'react-dev-utils/formatWebpackMessages';
 import { prepareUrls, Urls } from 'react-dev-utils/WebpackDevServerUtils';
+import yoshiStorybookUtils from './storybook';
 import openBrowser from './open-browser';
 import { PORT } from './utils/constants';
 import ServerProcess from './server-process';
@@ -13,7 +14,6 @@ import {
   getUrl as getTunnelUrl,
   getDevServerSocketPath,
 } from './utils/suricate';
-
 import devEnvironmentLogger from './dev-environment-logger';
 
 const isInteractive = process.stdout.isTTY;
@@ -43,6 +43,7 @@ type DevEnvironmentProps = {
   multiCompiler: webpack.MultiCompiler;
   appName: string;
   suricate: boolean;
+  storybook?: boolean;
   startUrl?: StartUrl;
 };
 
@@ -205,6 +206,8 @@ export default class DevEnvironment {
     await webpackDevServer.listenPromise();
     await compilationPromise;
 
+    yoshiStorybookUtils.start({});
+
     // start app server
     await serverProcess.initialize();
 
@@ -226,6 +229,7 @@ export default class DevEnvironment {
     appName,
     startUrl,
     suricate = false,
+    storybook = false,
   }: {
     webpackConfigs: [
       webpack.Configuration,
@@ -241,6 +245,7 @@ export default class DevEnvironment {
     appName: string;
     startUrl?: StartUrl;
     suricate?: boolean;
+    storybook?: boolean;
   }): Promise<DevEnvironment> {
     const [clientConfig, serverConfig] = webpackConfigs;
 
@@ -330,7 +335,7 @@ export default class DevEnvironment {
     }
 
     devEnvironment.store.subscribe(state =>
-      devEnvironmentLogger({ state, appName, suricate }),
+      devEnvironmentLogger({ state, appName, suricate, storybook }),
     );
 
     return devEnvironment;
