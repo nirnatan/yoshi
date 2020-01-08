@@ -1,0 +1,11 @@
+{
+  "name": "storybook-js",
+  "private": true,
+  "yoshi": {
+    "projectType": "app",
+    "storybook": true
+  },
+  "jest": {
+    "preset": "jest-yoshi-preset"
+  }
+}
