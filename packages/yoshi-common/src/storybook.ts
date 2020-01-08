@@ -9,7 +9,7 @@ interface StartOptions {
 }
 
 const start = async ({ port = 9009 }: StartOptions) => {
-  return new Promise(async resolve => {
+  return new Promise(async (resolve, reject) => {
     try {
       const storyBookYoshiDepsFolder = path.dirname(
         require.resolve('yoshi-storybook-dependencies/package.json'),
@@ -31,14 +31,18 @@ const start = async ({ port = 9009 }: StartOptions) => {
         }
       });
     } catch (e) {
-      if (e.message.includes('command not found')) {
+      if (
+        e.message.includes(
+          "Cannot find module 'yoshi-storybook-dependencies/package.json'",
+        )
+      ) {
         console.log(
           chalk.yellow(
             `\nPlease install yoshi-storybook-dependencies in order to run storybook\n`,
           ),
         );
       }
-      resolve();
+      reject(e);
     }
   });
 };

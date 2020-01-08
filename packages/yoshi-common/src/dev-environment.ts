@@ -220,19 +220,21 @@ export default class DevEnvironment {
     openBrowser(actualStartUrl);
 
     if (storybook) {
-      console.log();
-      console.log('Starting storybook in watch mode');
-      console.log();
+      try {
+        console.log();
+        console.log('Starting storybook in watch mode');
+        console.log();
 
-      const storybookPort = 9009;
+        const storybookPort = 9009;
 
-      await yoshiStorybookUtils.start({ port: storybookPort });
+        await yoshiStorybookUtils.start({ port: storybookPort });
 
-      const storybookUrls = prepareUrls('http', host, storybookPort);
+        const storybookUrls = prepareUrls('http', host, storybookPort);
 
-      logStorybookUrls(storybookUrls);
+        logStorybookUrls(storybookUrls);
 
-      openBrowser(`http://localhost:${storybookPort}`);
+        openBrowser(`http://localhost:${storybookPort}`);
+      } catch (e) {}
     }
   }
 
