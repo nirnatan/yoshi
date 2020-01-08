@@ -72,6 +72,7 @@ export type InitialConfig = {
     externals?: WebpackExternals;
   };
   suricate?: boolean;
+  storybook?: boolean;
 };
 
 export type Config = {
@@ -118,4 +119,5 @@ export type Config = {
   webWorkerEntry?: WebpackEntry;
   webWorkerExternals?: WebpackExternals;
   suricate: boolean;
+  storybook: boolean;
 };

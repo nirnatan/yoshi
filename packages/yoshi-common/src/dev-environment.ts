@@ -14,7 +14,10 @@ import {
   getUrl as getTunnelUrl,
   getDevServerSocketPath,
 } from './utils/suricate';
-import devEnvironmentLogger from './dev-environment-logger';
+import {
+  default as devEnvironmentLogger,
+  logStorybookUrls,
+} from './dev-environment-logger';
 
 const isInteractive = process.stdout.isTTY;
 
@@ -196,6 +199,7 @@ export default class DevEnvironment {
       suricate,
       appName,
       startUrl,
+      storybook,
     } = this.props;
 
     const compilationPromise = new Promise(resolve => {
@@ -206,8 +210,6 @@ export default class DevEnvironment {
     await webpackDevServer.listenPromise();
     await compilationPromise;
 
-    yoshiStorybookUtils.start({});
-
     // start app server
     await serverProcess.initialize();
 
@@ -216,6 +218,22 @@ export default class DevEnvironment {
       : startUrl || 'http://localhost:3000';
 
     openBrowser(actualStartUrl);
+
+    if (storybook) {
+      console.log();
+      console.log('Starting storybook in watch mode');
+      console.log();
+
+      const storybookPort = 9009;
+
+      await yoshiStorybookUtils.start({ port: storybookPort });
+
+      const storybookUrls = prepareUrls('http', host, storybookPort);
+
+      logStorybookUrls(storybookUrls);
+
+      openBrowser(`http://localhost:${storybookPort}`);
+    }
   }
 
   static async create({
@@ -326,6 +344,7 @@ export default class DevEnvironment {
       appName,
       suricate,
       startUrl,
+      storybook,
     });
 
     devEnvironment.startServerHotUpdate(serverCompiler);
@@ -335,7 +354,7 @@ export default class DevEnvironment {
     }
 
     devEnvironment.store.subscribe(state =>
-      devEnvironmentLogger({ state, appName, suricate, storybook }),
+      devEnvironmentLogger({ state, appName, suricate }),
     );
 
     return devEnvironment;

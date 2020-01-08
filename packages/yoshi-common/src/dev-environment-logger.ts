@@ -41,22 +41,27 @@ const logLocalUrls = (serverUrls: Urls, devServerUrls: Urls) => {
   );
 };
 
-const logStorybookUrls = () => {
-  console.log(`
-    I also ran story book you old fart!
-  `);
+export const logStorybookUrls = (storybookUrls: Urls) => {
+  console.log();
+  console.log(`${chalk.bold('Storybook')} now running on`);
+  console.log();
+
+  console.log(
+    `  ${chalk.bold('Local:')}            ${storybookUrls.localUrlForTerminal}`,
+  );
+  console.log(
+    `  ${chalk.bold('On Your Network:')}  ${storybookUrls.lanUrlForTerminal}`,
+  );
 };
 
 export default ({
   state,
   appName,
   suricate,
-  storybook,
 }: {
   state: State;
   appName: string;
   suricate: boolean;
-  storybook: boolean;
 }) => {
   switch (state.status) {
     case 'compiling':
@@ -76,10 +81,6 @@ export default ({
         logSuricateUrls(appName);
       } else {
         logLocalUrls(state.serverUrls, state.devServerUrls);
-      }
-
-      if (storybook) {
-        logStorybookUrls();
       }
 
       console.log();
