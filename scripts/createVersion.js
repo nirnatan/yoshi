@@ -65,6 +65,10 @@ Promise.resolve()
 
     const createVersionedDocsCommand = `npm run version "${majorVersion}"`;
 
+    // Verify that we have all website related dependnecies installed
+    // console.log('installing website...)
+    // run yarn
+
     execa.sync(createVersionedDocsCommand, {
       cwd: websiteDirectory,
       stdio: 'inherit',
