@@ -1,5 +1,5 @@
 {
-  "name": "storybook-js",
+  "name": "storybook-ts",
   "private": true,
   "yoshi": {
     "projectType": "app",
