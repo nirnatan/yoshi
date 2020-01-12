@@ -1,57 +1,98 @@
 import chalk from 'chalk';
 import { Urls } from 'react-dev-utils/WebpackDevServerUtils';
-import { State } from './dev-environment';
+import { State, ProcessState, ProcessType } from './dev-environment';
 import { getUrl, getDevServerUrl } from './utils/suricate';
 
-const logSuricateUrls = (appName: string) => {
-  console.log(`  ${chalk.bold('Public:')} ${chalk.magenta(getUrl(appName))}`);
-  console.log();
-  console.log(
-    `Your bundles and other static assets are served from your ${chalk.bold(
-      'dev-server',
-    )}.`,
-  );
-  console.log();
-  console.log(
-    `  ${chalk.bold('Public:')} ${chalk.magenta(getDevServerUrl(appName))}`,
-  );
+const logSuricateUrls = (type: ProcessType, appName: string) => {
+  switch (type) {
+    case 'Server':
+      console.log(
+        `  ${chalk.bold('Public:')} ${chalk.magenta(getUrl(appName))}`,
+      );
+      break;
+    case 'DevServer':
+      console.log(
+        `  ${chalk.bold('Public:')} ${chalk.magenta(getDevServerUrl(appName))}`,
+      );
+      break;
+  }
 };
 
-const logLocalUrls = (serverUrls: Urls, devServerUrls: Urls) => {
-  console.log(
-    `  ${chalk.bold('Local:')}            ${serverUrls.localUrlForTerminal}`,
-  );
-  console.log(
-    `  ${chalk.bold('On Your Network:')}  ${serverUrls.lanUrlForTerminal}`,
-  );
-
-  console.log();
-  console.log(
-    `Your bundles and other static assets are served from your ${chalk.bold(
-      'dev-server',
-    )}.`,
-  );
-  console.log();
-
-  console.log(
-    `  ${chalk.bold('Local:')}            ${devServerUrls.localUrlForTerminal}`,
-  );
-  console.log(
-    `  ${chalk.bold('On Your Network:')}  ${devServerUrls.lanUrlForTerminal}`,
-  );
+const logMessageByProcessType: { [type in ProcessType]: string } = {
+  Server: `Your server is starting and should be accessible from your browser.`,
+  Storybook: 'Storybook is starting and should be accessible from your browser',
+  DevServer: `Your bundles and other static assets are served from your ${chalk.bold(
+    'dev-server',
+  )}.`,
 };
 
-export const logStorybookUrls = (storybookUrls: Urls) => {
+const logUrls = ({
+  processType,
+  urls,
+  suricate,
+  appName,
+}: {
+  processType: ProcessType;
+  urls?: Urls;
+  suricate: boolean;
+  appName: string;
+}) => {
   console.log();
-  console.log(`${chalk.bold('Storybook')} now running on`);
+  console.log(logMessageByProcessType[processType]);
   console.log();
 
-  console.log(
-    `  ${chalk.bold('Local:')}            ${storybookUrls.localUrlForTerminal}`,
-  );
-  console.log(
-    `  ${chalk.bold('On Your Network:')}  ${storybookUrls.lanUrlForTerminal}`,
-  );
+  if (suricate && processType !== 'Storybook') {
+    logSuricateUrls(processType, appName);
+  } else {
+    console.log(
+      `  ${chalk.bold('Local:')}            ${urls?.localUrlForTerminal}`,
+    );
+    console.log(
+      `  ${chalk.bold('On Your Network:')}  ${urls?.lanUrlForTerminal}`,
+    );
+  }
+
+  console.log();
+};
+
+const getProcessName = (type: ProcessType) =>
+  chalk.greenBright(`[${type.toUpperCase()}]`);
+
+const logProcessState = (
+  {
+    processType,
+    suricate,
+    appName,
+  }: { processType: ProcessType; suricate: boolean; appName: string },
+  state: ProcessState,
+) => {
+  switch (state.status) {
+    case 'compiling':
+      console.log(`${getProcessName(processType)}:`, 'Compiling...');
+      break;
+
+    case 'success':
+      console.log(
+        `${getProcessName(processType)}:`,
+        chalk.green('Compiled successfully!'),
+      );
+      logUrls({ processType, suricate, appName, urls: state.urls });
+      break;
+    case 'errors':
+      console.log(
+        `${getProcessName(processType)}:`,
+        chalk.red('Failed to compile.\n'),
+      );
+      console.log(state.errors?.join('\n\n'));
+      break;
+    case 'warnings':
+      console.log(
+        `${getProcessName(processType)}:`,
+        chalk.yellow('Compiled with warnings.\n'),
+      );
+      console.log(state.warnings?.join('\n\n'));
+      break;
+  }
 };
 
 export default ({
@@ -63,43 +104,17 @@ export default ({
   appName: string;
   suricate: boolean;
 }) => {
-  switch (state.status) {
-    case 'compiling':
-      console.log('Compiling...');
-      break;
-
-    case 'success':
-      console.log(chalk.green('Compiled successfully!'));
-
-      console.log();
-      console.log(
-        `Your server is starting and should be accessible from your browser.`,
-      );
-      console.log();
-
-      if (suricate) {
-        logSuricateUrls(appName);
-      } else {
-        logLocalUrls(state.serverUrls, state.devServerUrls);
-      }
-
-      console.log();
-      console.log('Note that the development build is not optimized.');
-      console.log(
-        `To create a production build, use ` +
-          `${chalk.cyan('npm run build')}.`,
-      );
-      console.log();
-      break;
-
-    case 'errors':
-      console.log(chalk.red('Failed to compile.\n'));
-      console.log(state.errors.join('\n\n'));
-      break;
-
-    case 'warnings':
-      console.log(chalk.yellow('Compiled with warnings.\n'));
-      console.log(state.warnings.join('\n\n'));
-      break;
+  for (const processTypeKey in state) {
+    const processType = processTypeKey as ProcessType;
+    const processState = state[processType];
+    processState &&
+      logProcessState({ processType, suricate, appName }, processState);
   }
+
+  console.log();
+  console.log('Note that the development build is not optimized.');
+  console.log(
+    `To create a production build, use ${chalk.cyan('npm run build')}.`,
+  );
+  console.log();
 };

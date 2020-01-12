@@ -3,7 +3,7 @@ import createStore, { Store } from 'unistore';
 import clearConsole from 'react-dev-utils/clearConsole';
 import formatWebpackMessages from 'react-dev-utils/formatWebpackMessages';
 import { prepareUrls, Urls } from 'react-dev-utils/WebpackDevServerUtils';
-import yoshiStorybookUtils from './storybook';
+import StorybookProcess from './storybook';
 import openBrowser from './open-browser';
 import { PORT } from './utils/constants';
 import ServerProcess from './server-process';
@@ -14,10 +14,7 @@ import {
   getUrl as getTunnelUrl,
   getDevServerSocketPath,
 } from './utils/suricate';
-import {
-  default as devEnvironmentLogger,
-  logStorybookUrls,
-} from './dev-environment-logger';
+import devEnvironmentLogger from './dev-environment-logger';
 
 const isInteractive = process.stdout.isTTY;
 
@@ -28,17 +25,26 @@ type WebpackStatus = {
 
 type StartUrl = string | Array<string> | null | undefined;
 
-export type State =
-  | {
+export type ProcessState =
+  | ({
       status: 'compiling';
-    }
+    } & Partial<WebpackStatus>)
   | ({
       status: 'success';
-      serverUrls: Urls;
-      devServerUrls: Urls;
-    } & WebpackStatus)
-  | ({ status: 'errors' } & WebpackStatus)
-  | ({ status: 'warnings' } & WebpackStatus);
+      urls?: Urls;
+    } & Partial<WebpackStatus>)
+  | ({ status: 'errors' } & Partial<WebpackStatus>)
+  | ({ status: 'warnings' } & Partial<WebpackStatus>);
+
+export const enum ProcessType {
+  DevServer = 'DevServer',
+  Server = 'Server',
+  Storybook = 'Storybook',
+}
+
+export type State = {
+  [type in ProcessType]?: ProcessState;
+};
 
 type DevEnvironmentProps = {
   webpackDevServer: WebpackDevServer;
@@ -46,7 +52,7 @@ type DevEnvironmentProps = {
   multiCompiler: webpack.MultiCompiler;
   appName: string;
   suricate: boolean;
-  storybook?: boolean;
+  storybookProcess?: StorybookProcess;
   startUrl?: StartUrl;
 };
 
@@ -66,15 +72,73 @@ export default class DevEnvironment {
       }
 
       this.store.setState({
-        status: 'compiling',
+        DevServer: {
+          status: 'compiling',
+        },
       });
     });
+
+    // eslint-disable-next-line no-unused-expressions
+    this.props.storybookProcess
+      ?.on('compiling', () => {
+        if (isInteractive) {
+          clearConsole();
+        }
+        this.store.setState({
+          Storybook: { status: 'compiling', errors: [], warnings: [] },
+        });
+      })
+      .on('compiled', () => {
+        if (isInteractive) {
+          clearConsole();
+        }
+        const urls = prepareUrls(
+          'http',
+          host,
+          this.props.storybookProcess?.port || 0,
+        );
+        this.store.setState({
+          Storybook: { status: 'success', urls, errors: [], warnings: [] },
+        });
+      })
+      .on('error', (err: string) => {
+        if (isInteractive) {
+          clearConsole();
+        }
+        const messages = formatWebpackMessages({
+          errors: [err],
+          warnings: [],
+        } as any);
+        this.store.setState({
+          Storybook: {
+            status: 'errors',
+            ...messages,
+          },
+        });
+      })
+      .on('warning', (warn: string) => {
+        if (isInteractive) {
+          clearConsole();
+        }
+        const messages = formatWebpackMessages({
+          warnings: [warn],
+          errors: [],
+        } as any);
+        this.store.setState({
+          Storybook: {
+            status: 'warnings',
+            ...messages,
+          },
+        });
+      });
 
     multiCompiler.hooks.done.tap('finished-log', stats => {
       if (isInteractive) {
         clearConsole();
       }
 
+      // @ts-ignore
+      console.log(stats.toJson({}, true));
       // @ts-ignore
       const messages = formatWebpackMessages(stats.toJson({}, true));
       const isSuccessful = !messages.errors.length && !messages.warnings.length;
@@ -89,24 +153,39 @@ export default class DevEnvironment {
         );
 
         this.store.setState({
-          status: 'success',
-          serverUrls,
-          devServerUrls,
-          ...messages,
-        } as State);
+          Server: {
+            status: 'success',
+            urls: serverUrls,
+            ...messages,
+          },
+          DevServer: {
+            status: 'success',
+            urls: devServerUrls,
+          },
+        });
       } else if (messages.errors.length) {
         if (messages.errors.length > 1) {
           messages.errors.length = 1;
         }
 
         this.store.setState({
-          status: 'errors',
-          ...messages,
+          Server: {
+            status: 'errors',
+            ...messages,
+          },
+          DevServer: {
+            status: 'errors',
+          },
         });
       } else if (messages.warnings.length) {
         this.store.setState({
-          status: 'warnings',
-          ...messages,
+          Server: {
+            status: 'warnings',
+            ...messages,
+          },
+          DevServer: {
+            status: 'warnings',
+          },
         });
       }
     });
@@ -199,7 +278,7 @@ export default class DevEnvironment {
       suricate,
       appName,
       startUrl,
-      storybook,
+      storybookProcess,
     } = this.props;
 
     const compilationPromise = new Promise(resolve => {
@@ -219,22 +298,9 @@ export default class DevEnvironment {
 
     openBrowser(actualStartUrl);
 
-    if (storybook) {
-      try {
-        console.log();
-        console.log('Starting storybook in watch mode');
-        console.log();
-
-        const storybookPort = 9009;
-
-        await yoshiStorybookUtils.start({ port: storybookPort });
-
-        const storybookUrls = prepareUrls('http', host, storybookPort);
-
-        logStorybookUrls(storybookUrls);
-
-        openBrowser(`http://localhost:${storybookPort}`);
-      } catch (e) {}
+    if (storybookProcess) {
+      await storybookProcess.start();
+      openBrowser(`http://localhost:${storybookProcess.port}`);
     }
   }
 
@@ -339,6 +405,15 @@ export default class DevEnvironment {
       cwd,
     });
 
+    let storybookProcess;
+
+    if (storybook) {
+      storybookProcess = StorybookProcess.create({
+        port: 9009,
+        verbose: false,
+      });
+    }
+
     const devEnvironment = new DevEnvironment({
       webpackDevServer,
       serverProcess,
@@ -346,7 +421,7 @@ export default class DevEnvironment {
       appName,
       suricate,
       startUrl,
-      storybook,
+      storybookProcess,
     });
 
     devEnvironment.startServerHotUpdate(serverCompiler);

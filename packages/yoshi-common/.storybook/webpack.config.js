@@ -2,6 +2,8 @@
 const { createBaseWebpackConfig } = require('../webpack.config')
 const webpack = require('webpack');
 
+
+
 module.exports = async ({ config, mode }) => {
 	const yoshiWebpackConfig = createBaseWebpackConfig({
 		configName: 'client',

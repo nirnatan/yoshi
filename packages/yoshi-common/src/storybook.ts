@@ -1,52 +1,95 @@
 import path from 'path';
+import { EventEmitter } from 'events';
 import execa from 'execa';
 import chalk from 'chalk';
+import waitPort from 'wait-port';
 
 const storyBookConfigFolder = path.join(__dirname, '..', '.storybook');
 
-interface StartOptions {
-  port?: number;
+interface StorybookProcessOptions {
+  port: number;
+  verbose: boolean;
 }
 
-const start = async ({ port = 9009 }: StartOptions) => {
-  return new Promise(async (resolve, reject) => {
+export default class StorybookProcess extends EventEmitter {
+  private verbose: boolean;
+  port: number;
+
+  constructor({ port, verbose }: StorybookProcessOptions) {
+    super();
+    this.port = port;
+    this.verbose = verbose;
+  }
+
+  static create({ port = 9009, verbose = false }: StorybookProcessOptions) {
+    return new StorybookProcess({ port, verbose });
+  }
+
+  start = async () => {
+    let storyBookYoshiDepsFolder;
     try {
-      const storyBookYoshiDepsFolder = path.dirname(
+      storyBookYoshiDepsFolder = path.dirname(
         require.resolve('yoshi-storybook-dependencies/package.json'),
       );
-      await execa(
-        `${storyBookYoshiDepsFolder}/node_modules/.bin/start-storybook -p ${port} -c ${storyBookConfigFolder} --ci`,
-        {
-          shell: true,
-          stdout: 'pipe',
-          stderr: 'pipe',
-          env: {
-            PROJECT_ROOT: path.join(process.cwd(), 'src'),
-          },
-        },
-      ).stdout?.on('data', buff => {
-        const resultString = buff.toString();
-        if (resultString && resultString.includes('started')) {
-          resolve(resultString);
-        }
-      });
     } catch (e) {
-      if (
-        e.message.includes(
-          "Cannot find module 'yoshi-storybook-dependencies/package.json'",
-        )
-      ) {
-        console.log(
-          chalk.yellow(
-            `\nPlease install yoshi-storybook-dependencies in order to run storybook\n`,
-          ),
-        );
-      }
-      reject(e);
+      this.emit(
+        'error',
+        `Please install yoshi-storybook-dependencies in order to run storybook`,
+      );
     }
-  });
-};
 
-export default {
-  start,
-};
+    const storybookCommand = `${storyBookYoshiDepsFolder}/node_modules/.bin/start-storybook -p ${this.port} -c ${storyBookConfigFolder} --ci`;
+
+    // console.log('Running command with', storybookCommand);
+    const storybookProcess = execa(storybookCommand, {
+      shell: true,
+      // Storybook uses npmlog which passes logs to stderr
+      stderr: 'pipe',
+      env: {
+        PROJECT_ROOT: path.join(process.cwd(), 'src'),
+      },
+    });
+
+    // eslint-disable-next-line no-unused-expressions
+    storybookProcess.stderr?.on('data', this.onData);
+
+    await waitPort({
+      port: +this.port,
+      output: 'silent',
+      timeout: 20000,
+    });
+  };
+  onError = (e: Buffer) => console.log('ASHASHSAHDAH', e);
+  onError2 = (e: Buffer) => console.log('324234adfflhjaflhj', e);
+
+  logVerbose = (str: string, isError?: boolean) => {
+    if (str) {
+      console.log();
+      console.log(
+        `${
+          isError
+            ? chalk.redBright('[Storybook ERROR]')
+            : chalk.greenBright('[Storybook]')
+        }: ${str}`,
+      );
+      console.log();
+    }
+  };
+
+  onData = (buff: Buffer) => {
+    const str = buff.toString();
+    const isError = str.includes('ERROR');
+    const isWarning = str.includes('WARNING');
+    const isCompiled = str.includes('webpack built');
+    this.verbose && this.logVerbose(str, isError);
+    if (isCompiled) {
+      this.emit('compiled');
+    }
+    if (isWarning) {
+      this.emit('warning', str.slice(str.indexOf('WARNING')));
+    }
+    if (isError) {
+      this.emit('error', str.slice(str.indexOf('ERROR')));
+    }
+  };
+}
