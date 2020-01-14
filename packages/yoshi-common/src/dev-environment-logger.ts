@@ -78,20 +78,40 @@ const logProcessState = (
       );
       logUrls({ processType, suricate, appName, urls: state.urls });
       break;
-    case 'errors':
-      console.log(
-        `${getProcessName(processType)}:`,
-        chalk.red('Failed to compile.\n'),
-      );
-      console.log(state.errors?.join('\n\n'));
-      break;
-    case 'warnings':
-      console.log(
-        `${getProcessName(processType)}:`,
-        chalk.yellow('Compiled with warnings.\n'),
-      );
-      console.log(state.warnings?.join('\n\n'));
-      break;
+  }
+};
+
+const hasErrorsOrWarnings = (state: State): boolean => {
+  return Object.keys(state).some(stateName => {
+    const processState = state[stateName as ProcessType];
+    return ['errors', 'warnings'].includes(processState?.status as string);
+  });
+};
+
+const logStateErrorsOrWarnings = (state: State) => {
+  const { Server, Storybook } = state;
+  if (Server && Server.status === 'errors') {
+    console.log(chalk.red('Failed to compile.\n'));
+    console.log(Server.errors?.join('\n\n'));
+    return;
+  }
+
+  if (Storybook && Storybook.status === 'errors') {
+    console.log(chalk.red('Failed to compile.\n'));
+    console.log(Storybook.errors?.join('\n\n'));
+    return;
+  }
+
+  if (Server && Server.status === 'warnings') {
+    console.log(chalk.red('Compiled with warnings.\n'));
+    console.log(Server.warnings?.join('\n\n'));
+    return;
+  }
+
+  if (Storybook && Storybook.status === 'warnings') {
+    console.log(chalk.red('Compiled with warnings.\n'));
+    console.log(Storybook.warnings?.join('\n\n'));
+    return;
   }
 };
 
@@ -104,6 +124,9 @@ export default ({
   appName: string;
   suricate: boolean;
 }) => {
+  if (hasErrorsOrWarnings(state)) {
+    return logStateErrorsOrWarnings(state);
+  }
   for (const processTypeKey in state) {
     const processType = processTypeKey as ProcessType;
     const processState = state[processType];

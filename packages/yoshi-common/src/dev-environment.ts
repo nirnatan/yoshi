@@ -138,8 +138,6 @@ export default class DevEnvironment {
       }
 
       // @ts-ignore
-      console.log(stats.toJson({}, true));
-      // @ts-ignore
       const messages = formatWebpackMessages(stats.toJson({}, true));
       const isSuccessful = !messages.errors.length && !messages.warnings.length;
 
@@ -410,7 +408,7 @@ export default class DevEnvironment {
     if (storybook) {
       storybookProcess = StorybookProcess.create({
         port: 9009,
-        verbose: false,
+        verbose: true,
       });
     }
 

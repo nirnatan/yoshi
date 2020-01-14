@@ -38,20 +38,22 @@ export default class StorybookProcess extends EventEmitter {
       );
     }
 
+    this.emit('compiling');
+
     const storybookCommand = `${storyBookYoshiDepsFolder}/node_modules/.bin/start-storybook -p ${this.port} -c ${storyBookConfigFolder} --ci`;
 
     // console.log('Running command with', storybookCommand);
     const storybookProcess = execa(storybookCommand, {
       shell: true,
       // Storybook uses npmlog which passes logs to stderr
-      stderr: 'pipe',
+      all: true,
       env: {
         PROJECT_ROOT: path.join(process.cwd(), 'src'),
       },
     });
 
     // eslint-disable-next-line no-unused-expressions
-    storybookProcess.stderr?.on('data', this.onData);
+    storybookProcess.all?.on('data', this.onData);
 
     await waitPort({
       port: +this.port,
@@ -59,8 +61,6 @@ export default class StorybookProcess extends EventEmitter {
       timeout: 20000,
     });
   };
-  onError = (e: Buffer) => console.log('ASHASHSAHDAH', e);
-  onError2 = (e: Buffer) => console.log('324234adfflhjaflhj', e);
 
   logVerbose = (str: string, isError?: boolean) => {
     if (str) {
