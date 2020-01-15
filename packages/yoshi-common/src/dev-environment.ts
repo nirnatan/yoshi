@@ -1,9 +1,10 @@
+import path from 'path';
 import webpack from 'webpack';
 import createStore, { Store } from 'unistore';
+import execa, { ExecaChildProcess } from 'execa';
 import clearConsole from 'react-dev-utils/clearConsole';
 import formatWebpackMessages from 'react-dev-utils/formatWebpackMessages';
 import { prepareUrls, Urls } from 'react-dev-utils/WebpackDevServerUtils';
-import StorybookProcess from './storybook';
 import openBrowser from './open-browser';
 import { PORT } from './utils/constants';
 import ServerProcess from './server-process';
@@ -52,7 +53,7 @@ type DevEnvironmentProps = {
   multiCompiler: webpack.MultiCompiler;
   appName: string;
   suricate: boolean;
-  storybookProcess?: StorybookProcess;
+  storybookProcess?: ExecaChildProcess;
   startUrl?: StartUrl;
 };
 
@@ -78,59 +79,9 @@ export default class DevEnvironment {
       });
     });
 
-    // eslint-disable-next-line no-unused-expressions
-    this.props.storybookProcess
-      ?.on('compiling', () => {
-        if (isInteractive) {
-          clearConsole();
-        }
-        this.store.setState({
-          Storybook: { status: 'compiling', errors: [], warnings: [] },
-        });
-      })
-      .on('compiled', () => {
-        if (isInteractive) {
-          clearConsole();
-        }
-        const urls = prepareUrls(
-          'http',
-          host,
-          this.props.storybookProcess?.port || 0,
-        );
-        this.store.setState({
-          Storybook: { status: 'success', urls, errors: [], warnings: [] },
-        });
-      })
-      .on('error', (err: string) => {
-        if (isInteractive) {
-          clearConsole();
-        }
-        const messages = formatWebpackMessages({
-          errors: [err],
-          warnings: [],
-        } as any);
-        this.store.setState({
-          Storybook: {
-            status: 'errors',
-            ...messages,
-          },
-        });
-      })
-      .on('warning', (warn: string) => {
-        if (isInteractive) {
-          clearConsole();
-        }
-        const messages = formatWebpackMessages({
-          warnings: [warn],
-          errors: [],
-        } as any);
-        this.store.setState({
-          Storybook: {
-            status: 'warnings',
-            ...messages,
-          },
-        });
-      });
+    if (this.props.storybookProcess) {
+      this.props.storybookProcess.on('message', this.onStoryBookMessage);
+    }
 
     multiCompiler.hooks.done.tap('finished-log', stats => {
       if (isInteractive) {
@@ -188,6 +139,65 @@ export default class DevEnvironment {
       }
     });
   }
+
+  onStoryBookMessage = (
+    message:
+      | { type: 'listening'; port: number }
+      | { type: 'compiling' }
+      | { type: 'finished-log'; stats: any; port: number }
+      | { type: 'error'; error: string },
+  ) => {
+    switch (message.type) {
+      case 'error':
+        this.store.setState({
+          Storybook: { status: 'errors', errors: [message.error] },
+        });
+        break;
+      case 'compiling':
+        if (isInteractive) {
+          clearConsole();
+        }
+        this.store.setState({
+          Storybook: { status: 'compiling', errors: [], warnings: [] },
+        });
+        break;
+      case 'listening':
+        openBrowser(`http://localhost:${message.port}`);
+        break;
+      case 'finished-log':
+        if (isInteractive) {
+          clearConsole();
+        }
+        // @ts-ignore
+        const messages = formatWebpackMessages(message.stats);
+        const isSuccessful =
+          !messages.errors.length && !messages.warnings.length;
+        if (isSuccessful) {
+          const urls = prepareUrls('http', host, Number(message.port));
+          this.store.setState({
+            Storybook: { status: 'success', urls, ...messages },
+          });
+        } else if (messages.errors.length) {
+          if (messages.errors.length > 1) {
+            messages.errors.length = 1;
+          }
+          this.store.setState({
+            Storybook: {
+              status: 'errors',
+              ...messages,
+            },
+          });
+        } else if (messages.warnings.length) {
+          this.store.setState({
+            Storybook: {
+              status: 'warnings',
+              ...messages,
+            },
+          });
+        }
+        break;
+    }
+  };
 
   private async triggerBrowserRefresh(jsonStats: webpack.Stats.ToJsonOutput) {
     const { webpackDevServer } = this.props;
@@ -276,7 +286,6 @@ export default class DevEnvironment {
       suricate,
       appName,
       startUrl,
-      storybookProcess,
     } = this.props;
 
     const compilationPromise = new Promise(resolve => {
@@ -295,11 +304,6 @@ export default class DevEnvironment {
       : startUrl || 'http://localhost:3000';
 
     openBrowser(actualStartUrl);
-
-    if (storybookProcess) {
-      await storybookProcess.start();
-      openBrowser(`http://localhost:${storybookProcess.port}`);
-    }
   }
 
   static async create({
@@ -406,10 +410,12 @@ export default class DevEnvironment {
     let storybookProcess;
 
     if (storybook) {
-      storybookProcess = StorybookProcess.create({
-        port: 9009,
-        verbose: true,
-      });
+      const pathToStorybook = path.join(
+        __dirname,
+        'storybook',
+        'storybook-worker',
+      );
+      storybookProcess = execa.node(pathToStorybook, [], {});
     }
 
     const devEnvironment = new DevEnvironment({

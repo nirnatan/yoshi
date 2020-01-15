@@ -82,7 +82,7 @@ export default (initialConfig: InitialConfig, pkgJson: PackageJson): Config => {
     isAngularProject: !!dependencies.angular || !!peerDependencies.angular,
     isReactProject: !!dependencies.react || !!peerDependencies.react,
     suricate: initialConfig.suricate ?? false,
-    storybook: initialConfig.storybook ?? false,
+    experimentalStorybook: initialConfig.experimentalStorybook ?? false,
   };
 
   return config;

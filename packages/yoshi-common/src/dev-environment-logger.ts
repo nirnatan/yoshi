@@ -20,7 +20,8 @@ const logSuricateUrls = (type: ProcessType, appName: string) => {
 
 const logMessageByProcessType: { [type in ProcessType]: string } = {
   Server: `Your server is starting and should be accessible from your browser.`,
-  Storybook: 'Storybook is starting and should be accessible from your browser',
+  Storybook:
+    'Storybook is starting and should be accessible from your browser.',
   DevServer: `Your bundles and other static assets are served from your ${chalk.bold(
     'dev-server',
   )}.`,
@@ -72,10 +73,6 @@ const logProcessState = (
       break;
 
     case 'success':
-      console.log(
-        `${getProcessName(processType)}:`,
-        chalk.green('Compiled successfully!'),
-      );
       logUrls({ processType, suricate, appName, urls: state.urls });
       break;
   }
@@ -115,6 +112,13 @@ const logStateErrorsOrWarnings = (state: State) => {
   }
 };
 
+const isAllCompiled = (state: State): boolean => {
+  return Object.keys(state).every(stateName => {
+    const processState = state[stateName as ProcessType];
+    return processState?.status === 'success';
+  });
+};
+
 export default ({
   state,
   appName,
@@ -127,6 +131,11 @@ export default ({
   if (hasErrorsOrWarnings(state)) {
     return logStateErrorsOrWarnings(state);
   }
+
+  if (isAllCompiled(state)) {
+    console.log(chalk.green('Compiled successfully!'));
+  }
+
   for (const processTypeKey in state) {
     const processType = processTypeKey as ProcessType;
     const processState = state[processType];

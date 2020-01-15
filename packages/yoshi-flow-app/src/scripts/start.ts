@@ -107,7 +107,7 @@ const start: cliCommand = async function(argv, config) {
     startUrl: url || config.startUrl,
     enableClientHotUpdates: Boolean(config.hmr),
     createEjsTemplates: config.experimentalBuildHtml,
-    storybook: config.storybook,
+    storybook: config.experimentalStorybook,
   });
 
   await devEnvironment.start();
