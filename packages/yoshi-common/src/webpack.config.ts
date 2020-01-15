@@ -11,6 +11,7 @@ import {
   ASSETS_DIR,
   TEMPLATES_DIR,
   TEMPLATES_BUILD_DIR,
+  SERVER_CHUNKS_DIR,
 } from 'yoshi-config/paths';
 import resolve from 'resolve';
 import {
@@ -346,7 +347,7 @@ export function createBaseWebpackConfig({
         ? {
             path: join(BUILD_DIR),
             filename: '[name].js',
-            chunkFilename: 'chunks/[name].js',
+            chunkFilename: `${SERVER_CHUNKS_DIR}/[name].js`,
             libraryTarget: 'umd',
             globalObject: "(typeof self !== 'undefined' ? self : this)",
             // Point sourcemap entries to original disk location (format as URL on Windows)

@@ -11,6 +11,7 @@ const {
   inTeamCity: checkInTeamCity,
   isTypescriptProject: checkIsTypescriptProject,
 } = require('yoshi-helpers/queries');
+const { SERVER_ENTRY } = require('yoshi-config/paths');
 const { defaultEntry } = require('yoshi-helpers/constants');
 
 const isProduction = checkIsProduction();
@@ -130,7 +131,7 @@ function createServerWebpackConfig({
     let entryConfig = {};
 
     if (serverEntry) {
-      entryConfig = { ...entryConfig, server: serverEntry };
+      entryConfig = { ...entryConfig, [SERVER_ENTRY]: serverEntry };
     }
 
     return entryConfig;

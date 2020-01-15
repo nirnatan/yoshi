@@ -16,7 +16,7 @@ import {
   inTeamCity,
   isProduction,
 } from 'yoshi-helpers/queries';
-import { STATICS_DIR } from 'yoshi-config/paths';
+import { STATICS_DIR, SERVER_ENTRY } from 'yoshi-config/paths';
 import ManifestPlugin from 'yoshi-common/build/manifest-webpack-plugin';
 import { isObject } from 'lodash';
 import { PackageGraphNode } from './load-package-graph';
@@ -29,7 +29,7 @@ const defaultSplitChunksConfig = {
   minChunks: 2,
 };
 
-const createDefaultOptions = (rootConfig: Config, pkg: PackageGraphNode) => {
+const createDefaultOptions = (pkg: PackageGraphNode) => {
   const separateCss =
     pkg.config.separateCss === 'prod'
       ? inTeamCity() || isProduction()
@@ -63,7 +63,7 @@ export function createClientWebpackConfig(
 ): webpack.Configuration {
   const entry = pkg.config.entry || defaultEntry;
 
-  const defaultOptions = createDefaultOptions(rootConfig, pkg);
+  const defaultOptions = createDefaultOptions(pkg);
 
   const customThunderboltApp = pkg.name === 'thunderbolt-app';
   const customSiteAssetsModule = pkg.name === 'thunderbolt-becky';
@@ -148,7 +148,7 @@ export function createServerWebpackConfig(
   pkg: PackageGraphNode,
   { isDev, isHot }: { isDev?: boolean; isHot?: boolean } = {},
 ): webpack.Configuration {
-  const defaultOptions = createDefaultOptions(rootConfig, pkg);
+  const defaultOptions = createDefaultOptions(pkg);
 
   const customThunderboltElements = pkg.name === 'thunderbolt-elements';
 
@@ -185,7 +185,7 @@ export function createServerWebpackConfig(
       : {};
 
     if (serverEntry) {
-      entryConfig = { ...entryConfig, server: serverEntry };
+      entryConfig = { ...entryConfig, [SERVER_ENTRY]: serverEntry };
     }
 
     return entryConfig;
@@ -199,7 +199,7 @@ export function createWebWorkerWebpackConfig(
   pkg: PackageGraphNode,
   { isDev, isHot }: { isDev?: boolean; isHot?: boolean } = {},
 ): webpack.Configuration {
-  const defaultOptions = createDefaultOptions(rootConfig, pkg);
+  const defaultOptions = createDefaultOptions(pkg);
 
   const workerConfig = createBaseWebpackConfig({
     cwd: pkg.location,

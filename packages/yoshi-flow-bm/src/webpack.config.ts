@@ -10,6 +10,7 @@ import {
   inTeamCity,
   isProduction,
 } from 'yoshi-helpers/queries';
+import { SERVER_ENTRY } from 'yoshi-config/paths';
 import bmExternalModules from './bmExternalModules';
 
 const useTypeScript = isTypescriptProject();
@@ -88,7 +89,7 @@ export function createServerWebpackConfig(
       : {};
 
     if (serverEntry) {
-      entryConfig = { ...entryConfig, server: serverEntry };
+      entryConfig = { ...entryConfig, [SERVER_ENTRY]: serverEntry };
     }
 
     return entryConfig;

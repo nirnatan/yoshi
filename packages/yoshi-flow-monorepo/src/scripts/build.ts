@@ -7,7 +7,13 @@ import {
 } from 'yoshi-common/print-build-results';
 import bfj from 'bfj';
 import WebpackManager from 'yoshi-common/webpack-manager';
-import { BUILD_DIR, TARGET_DIR, STATS_FILE } from 'yoshi-config/paths';
+import {
+  STATICS_DIR,
+  TARGET_DIR,
+  STATS_FILE,
+  SERVER_CHUNKS_BUILD_DIR,
+  SERVER_BUNDLE,
+} from 'yoshi-config/paths';
 import chalk from 'chalk';
 import { inTeamCity as checkInTeamCity } from 'yoshi-helpers/queries';
 import { copyTemplates } from 'yoshi-common/copy-assets';
@@ -69,8 +75,10 @@ const build: cliCommand = async function(argv, rootConfig, { apps, libs }) {
     apps.reduce((acc: Array<Promise<void>>, app) => {
       return [
         ...acc,
-        fs.emptyDir(path.join(app.location, BUILD_DIR)),
+        fs.emptyDir(path.join(app.location, STATICS_DIR)),
         fs.emptyDir(path.join(app.location, TARGET_DIR)),
+        fs.emptyDir(path.join(app.location, SERVER_CHUNKS_BUILD_DIR)),
+        fs.unlink(path.join(app.location, SERVER_BUNDLE)).catch(() => {}),
       ];
     }, []),
   );
