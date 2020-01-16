@@ -1,5 +1,5 @@
 {
-  "name": "storybook-error-in-story-and-app-js",
+  "name": "storybook-error-in-story-ts",
   "private": true,
   "yoshi": {
     "projectType": "app",

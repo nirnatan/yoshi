@@ -73,7 +73,6 @@ module.exports = class Scripts {
   }
 
   async dev(callback = () => {}) {
-    console.log('I started running! ');
     let startProcessOutput;
     const startProcess = execa(
       'node',
@@ -103,8 +102,6 @@ module.exports = class Scripts {
       }
     });
 
-    console.log('We have a process');
-
     // `startProcess` will never resolve but if it fails this
     // promise will reject immediately
     try {
@@ -112,7 +109,6 @@ module.exports = class Scripts {
         waitForStdout(startProcess, 'Compiled with warnings', {
           throttle: true,
         }).then(() => {
-          // console.log(data);
           throw new Error(
             `Yoshi start was compiled with warnings \n \n ${startProcessOutput}`,
           );
@@ -132,7 +128,6 @@ module.exports = class Scripts {
         startProcess,
       ]);
 
-      console.log(startProcessOutput);
       await callback();
     } catch (e) {
       if (this.verbose) {
