@@ -19,11 +19,6 @@ const defaultOptions = {
 
 const yoshiBin = require.resolve('../packages/yoshi/bin/yoshi-cli');
 
-const isStorybook = ({ testDirectory }) => {
-  const pkgJson = require(path.join(testDirectory, 'package.json'));
-  return pkgJson.yoshi.storybook;
-};
-
 module.exports = class Scripts {
   constructor({ testDirectory }) {
     this.verbose = !!process.env.DEBUG;
@@ -31,7 +26,6 @@ module.exports = class Scripts {
     this.serverProcessPort = 3000;
     this.staticsServerPort = 3200;
     this.storybookPort = 9009;
-    this.shouldWaitForStorybook = isStorybook({ testDirectory });
     this.yoshiPublishDir = isPublish
       ? `${global.yoshiPublishDir}/node_modules`
       : path.join(__dirname, '../packages/yoshi-flow-legacy/node_modules');
@@ -79,6 +73,7 @@ module.exports = class Scripts {
   }
 
   async dev(callback = () => {}) {
+    console.log('I started running! ');
     let startProcessOutput;
     const startProcess = execa(
       'node',
@@ -108,17 +103,26 @@ module.exports = class Scripts {
       }
     });
 
+    console.log('We have a process');
+
     // `startProcess` will never resolve but if it fails this
     // promise will reject immediately
     try {
       await Promise.race([
-        waitForStdout(startProcess, 'Compiled with warnings').then(data => {
+        waitForStdout(startProcess, 'Compiled with warnings', {
+          throttle: true,
+        }).then(() => {
+          // console.log(data);
           throw new Error(
-            `Yoshi start was compiled with warnings \n \n ${data}`,
+            `Yoshi start was compiled with warnings \n \n ${startProcessOutput}`,
           );
         }),
-        waitForStdout(startProcess, 'Failed to compile').then(data => {
-          throw new Error(`Yoshi start failed to compile: \n \n ${data}`);
+        waitForStdout(startProcess, 'Failed to compile', {
+          throttle: true,
+        }).then(() => {
+          throw new Error(
+            `Yoshi start failed to compile: \n \n ${startProcessOutput}`,
+          );
         }),
         Promise.all([
           waitForPort(this.serverProcessPort, { timeout: 60 * 1000 }),
@@ -128,15 +132,16 @@ module.exports = class Scripts {
         startProcess,
       ]);
 
-      if (this.shouldWaitForStorybook) {
-        await waitForPort(this.storybookPort, { timeout: 60 * 1000 });
-      }
-
+      console.log(startProcessOutput);
       await callback();
     } catch (e) {
-      console.log('--------------- Yoshi Start Output ---------------');
-      console.log(startProcessOutput);
-      console.log('--------------- End of Yoshi Start Output ---------------');
+      if (this.verbose) {
+        console.log('--------------- Yoshi Start Output ---------------');
+        console.log(startProcessOutput);
+        console.log(
+          '--------------- End of Yoshi Start Output ---------------',
+        );
+      }
       throw e;
     } finally {
       await terminateAsyncSafe(startProcess.pid);

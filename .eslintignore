@@ -1,5 +1,9 @@
 packages/**/fixtures
 test/javascript/features/output/output-error-babel/src/client.js
+test/javascript/features/storybook/error-in-story-and-app/src/component.stories.js
+test/javascript/features/storybook/error-in-story-and-app/src/component.js
+test/javascript/features/storybook/error-in-story/src/component.stories.js
+test/javascript/features/output/output-error-babel/src/client.js
 node_modules
 dist
 build

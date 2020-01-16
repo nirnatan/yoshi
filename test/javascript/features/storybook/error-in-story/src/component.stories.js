@@ -5,4 +5,4 @@ export default {
   title: 'Components',
 };
 
-export const Basic = () => <Component />;
+export const Basic = () => <Component />asd;;

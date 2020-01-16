@@ -3,7 +3,7 @@
   "private": true,
   "yoshi": {
     "projectType": "app",
-    "storybook": true
+    "experimentalStorybook": true
   },
   "jest": {
     "preset": "jest-yoshi-preset"

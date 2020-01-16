@@ -117,8 +117,14 @@ function waitForPortToFree(port) {
     expect(await isPortTaken(port)).toEqual(false);
   });
 }
+function throttleFunc(method, scope, ...args) {
+  clearTimeout(method._tId);
+  method._tId = setTimeout(function() {
+    method.call(scope, ...args);
+  }, 100);
+}
 
-function waitForStdout(spawnedProcess, stringToMatch) {
+function waitForStdout(spawnedProcess, stringToMatch, options) {
   let data = '';
 
   return new Promise(resolve => {
@@ -126,7 +132,11 @@ function waitForStdout(spawnedProcess, stringToMatch) {
       data += buffer.toString();
       if (buffer.toString().includes(stringToMatch)) {
         spawnedProcess.stdout.off('data', listener);
-        resolve(data);
+        if (options && options.throttle) {
+          throttleFunc(resolve, null, data);
+        } else {
+          resolve(data);
+        }
       }
     });
   });

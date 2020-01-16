@@ -1,7 +1,8 @@
-const Scripts = require('../../../scripts');
+const Scripts = require('../../../../scripts');
 
 const scripts = Scripts.setupProjectFromTemplate({
   templateDir: __dirname,
+  projectType: Scripts.projectType.JS,
 });
 
 it('should support storybook in dev mode', async () => {
