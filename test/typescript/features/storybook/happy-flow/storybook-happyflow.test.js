@@ -12,6 +12,6 @@ it('should support storybook in dev mode', async () => {
     );
     await page.waitForSelector('#component');
     const result = await page.$eval('#component', elm => elm.textContent);
-    expect(result).toBe('Component In Storybook');
+    expect(result).toBe('Component in Storybook');
   });
 });
