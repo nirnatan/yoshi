@@ -130,13 +130,9 @@ module.exports = class Scripts {
 
       await callback();
     } catch (e) {
-      if (this.verbose) {
-        console.log('--------------- Yoshi Start Output ---------------');
-        console.log(startProcessOutput);
-        console.log(
-          '--------------- End of Yoshi Start Output ---------------',
-        );
-      }
+      console.log('--------------- Yoshi Start Output ---------------');
+      console.log(startProcessOutput);
+      console.log('--------------- End of Yoshi Start Output ---------------');
       throw e;
     } finally {
       await terminateAsyncSafe(startProcess.pid);

@@ -124,7 +124,11 @@ function throttleFunc(method, scope, ...args) {
   }, 100);
 }
 
-function waitForStdout(spawnedProcess, stringToMatch, options) {
+function waitForStdout(
+  spawnedProcess,
+  stringToMatch,
+  options = { throttle: false },
+) {
   let data = '';
 
   return new Promise(resolve => {
@@ -132,7 +136,7 @@ function waitForStdout(spawnedProcess, stringToMatch, options) {
       data += buffer.toString();
       if (buffer.toString().includes(stringToMatch)) {
         spawnedProcess.stdout.off('data', listener);
-        if (options && options.throttle) {
+        if (options.throttle) {
           throttleFunc(resolve, null, data);
         } else {
           resolve(data);
