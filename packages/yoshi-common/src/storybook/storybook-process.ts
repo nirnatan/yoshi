@@ -38,7 +38,6 @@ export default class StorybookProcess extends EventEmitter {
     // eslint-disable-next-line import/no-extraneous-dependencies
     const storybook = require(`${storyBookYoshiDepsFolder}/node_modules/@storybook/react/standalone`);
 
-    console.log({ storybook });
     const webpackConfig = createWebpackConfig({
       projectRoot: path.join(process.cwd(), 'src'),
       reporter: this.reporter,
@@ -49,7 +48,7 @@ export default class StorybookProcess extends EventEmitter {
       webpackConfig,
       port: this.port,
       ci: true,
-      quiet: true,
+      quiet: false,
       configDir: storyBookConfigFolder,
     });
 

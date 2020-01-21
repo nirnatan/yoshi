@@ -20,36 +20,6 @@ export function logIfAny(log: any) {
   }
 }
 
-export const unprocessedModules = (p: string) => {
-  const allSourcesButExternalModules = (filePath: string) => {
-    filePath = path.normalize(filePath);
-    return (
-      filePath.startsWith(process.cwd()) && !filePath.includes('node_modules')
-    );
-  };
-
-  // Hacky until `editor-elements`' build is ready
-  const isEditorElements = (filePath: string) => {
-    return (
-      config.name === 'thunderbolt' && filePath.includes('editor-elements')
-    );
-  };
-
-  const externalUnprocessedModules = ['wix-style-react/src'].concat(
-    config.externalUnprocessedModules,
-  );
-
-  const externalRegexList = externalUnprocessedModules.map(
-    m => new RegExp(`node_modules/${m}`),
-  );
-
-  return (
-    externalRegexList.some(regex => regex.test(p)) ||
-    allSourcesButExternalModules(p) ||
-    isEditorElements(p)
-  );
-};
-
 export const createBabelConfig = (presetOptions = {}) => {
   const pathsToResolve = [__filename];
   try {

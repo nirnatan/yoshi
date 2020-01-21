@@ -37,11 +37,7 @@ export type ProcessState =
   | ({ status: 'errors' } & Partial<WebpackStatus>)
   | ({ status: 'warnings' } & Partial<WebpackStatus>);
 
-export const enum ProcessType {
-  DevServer = 'DevServer',
-  Server = 'Server',
-  Storybook = 'Storybook',
-}
+export type ProcessType = 'DevServer' | 'Server' | 'Storybook';
 
 export type State = {
   [type in ProcessType]?: ProcessState;
