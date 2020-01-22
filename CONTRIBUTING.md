@@ -33,6 +33,49 @@ That's it, you're good to go.
 1.  Make sure the feature is tested.
 2.  Document it in [README.md](https://github.com/wix/yoshi/blob/master/README.md)
 
+## Test types
+
+### Integration tests
+
+Test each feature on a dedicated installed project.
+
+How it works:
+
+1. We copy base fixture template to `.tmp` folder (basic files like `package.json` etc.)
+2. Copy test feature folder to the same destination, overriding existing files.
+3. Run the test using puppeteer, against the installed project. This will test how the feature works for the user's production code.
+4. Most tests run:
+   - `prod` or `dev` in order to simulate local and production environments.
+   - a `test` command, testing how user's own tests run, in the installed project. This one basically tests out `jest-yoshi-preset`
+
+Command:
+
+`npx jest --runInBand` - Run all integration tests (not recommended locally). Please see below how to run those localy.
+
+### Unit tests
+
+Isolated unit tests for each Yoshi package
+
+Command:
+
+`yarn test:unit`
+
+### Template tests
+
+Create a `create-yoshi-app`'s template, and then run install, build and test.
+
+Command:
+
+`yarn test:{templateName}`
+
+### Legacy integration tests
+
+Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working. (These tests are legacy. New features should be written in the previous integration tests)
+
+Command:
+
+`yarn test:legacy:{commandName|other}`
+
 ## Running Integration Tests Locally
 
 We have several status checks for integration tests, in order to parallelize them in CI. Locally, we ususally run the specific feature relevant for us. You can filter it using jest (awesome) filtering capabilitues. For example:
