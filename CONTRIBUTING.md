@@ -22,7 +22,7 @@ Please **ask first** if somebody else is already working on this or the core dev
 
 That's it, you're good to go.
 
-- `yarn test:integration:{feature}:{dev|prod}:{js|ts}:{fast?}` - Run integration test for different features. Please see below how to run those localy.
+- `npx jest --runInBand` - Run integration all tests (not recommended locally). Please see below how to run those localy.
 - `yarn test:{templateName}` - Create a `create-yoshi-app`'s template, install, build and test.
 - `yarn test:legacy:{commandName|other}` - Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working.
 - `yarn test:unit` - Run the unit tests of all packages using `jest`.
@@ -35,7 +35,7 @@ That's it, you're good to go.
 
 ## Running Integration Tests Locally
 
-We have several status checks for integration tests, in order to parallelize them in CI. Locally, we will ususally run the specific feature relevant for us. You can filter it using jest (awesome) filtering capabilitues. For example:
+We have several status checks for integration tests, in order to parallelize them in CI. Locally, we ususally run the specific feature relevant for us. You can filter it using jest (awesome) filtering capabilitues. For example:
 
 ```
 npx jest css-inclution --runInBand
