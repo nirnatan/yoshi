@@ -1,5 +1,4 @@
 import React from 'react';
+import someModule from './someModule.foo';
 
-export default function() {
-  return <div></div>;
-}
+export default () => <div id="jest-preset-overrides">{someModule}</div>;
