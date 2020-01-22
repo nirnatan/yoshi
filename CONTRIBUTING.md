@@ -22,16 +22,14 @@ Please **ask first** if somebody else is already working on this or the core dev
 
 That's it, you're good to go.
 
-- `npx jest --runInBand` - Run integration all tests (not recommended locally). Please see below how to run those localy.
-- `yarn test:{templateName}` - Create a `create-yoshi-app`'s template, install, build and test.
-- `yarn test:legacy:{commandName|other}` - Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working.
-- `yarn test:unit` - Run the unit tests of all packages using `jest`.
-- `yarn lint` - Run [eslint](https://eslint.org/) on all packages with the following [rules](https://github.com/wix/yoshi/blob/master/.eslintrc).
-
 ## Adding a New Feature to the Yoshi Toolkit
 
 1.  Make sure the feature is tested.
 2.  Document it in [README.md](https://github.com/wix/yoshi/blob/master/README.md)
+
+## Lint
+
+`yarn lint` - Run [eslint](https://eslint.org/) on all packages with the following [rules](https://github.com/wix/yoshi/blob/master/.eslintrc).
 
 ## Test types
 
@@ -69,6 +67,8 @@ Command:
 `yarn test:{templateName}`
 
 ### Legacy integration tests
+
+** Legacy **
 
 Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working. (These tests are legacy. New features should be written in the previous integration tests)
 
@@ -116,7 +116,9 @@ The tests will run under `.tmp` folder and can be debugged easily. For example:
 > .tmp/javascript/features/css-inclution >> node /{project path}/yoshi/packages/yoshi/bin/yoshi-cli.js start --server="./dist/server"
 ```
 
-## Running test:legacy:{commandName|other} Locally
+## Running Legacy Integration Tests Locally
+
+** Legacy **
 
 Yoshi's test suite, in its current state, takes a long time to complete and (unfortunately) contains flaky tests. Therefore, we advise limiting the scope of the test execution in your local environment to the tests that are most affected by your changes. Limit the scope using [mocha's `only` function](https://mochajs.org/#exclusive-tests).
 
@@ -154,7 +156,7 @@ VERBOSE_TESTS=true npm test
 
 This is the same as adding the `.verbose()` method to each and every test.
 
-## Running test:templates
+## Running Template Tests Locally
 
 The E2E suite will create a corresponding E2E test for each template from `projects/create-yoshi-app/templates` directory. It will generate the project in a temporary directory, it will then run `npm install` & `npm test` to verify that it's not failing.
 
