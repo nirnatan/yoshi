@@ -22,8 +22,9 @@ Please **ask first** if somebody else is already working on this or the core dev
 
 That's it, you're good to go.
 
-- `yarn test:templates` - Create all `create-yoshi-app`'s templates, install, build and test each one of them.
-- `yarn test:integration` - Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working.
+- `yarn test:integration:{feature}:{dev|prod}:{js|ts}:{fast?}` - Run integration test for different features. Please see below how to run those localy.
+- `yarn test:{templateName}` - Create a `create-yoshi-app`'s template, install, build and test.
+- `yarn test:legacy:{commandName|other}` - Create a few complex projects that cover a lot of different edge-cases, build, run, and test that everything is working.
 - `yarn test:unit` - Run the unit tests of all packages using `jest`.
 - `yarn lint` - Run [eslint](https://eslint.org/) on all packages with the following [rules](https://github.com/wix/yoshi/blob/master/.eslintrc).
 
@@ -32,18 +33,58 @@ That's it, you're good to go.
 1.  Make sure the feature is tested.
 2.  Document it in [README.md](https://github.com/wix/yoshi/blob/master/README.md)
 
-## Running test:integration Locally
+## Running Integration Tests Locally
+
+We have several status checks for integration tests, in order to parallelize them in CI. Locally, we will ususally run the specific feature relevant for us. You can filter it using jest (awesome) filtering capabilitues. For example:
+
+```
+npx jest css-inclution --runInBand
+```
+
+or
+
+```
+npx jest typescript/features/loaders/css/css-inclusion/css-inclusion.test.js --runInBand
+```
+
+You can also filter a specific test:
+
+```
+npx jest moment -t='exclude locales imported from moment' --runInBand
+```
+
+#### Debugging a test locally:
+
+Add a `DEBUG=true` before the command, for example:
+
+```
+DEBUG=true npx jest css-inclution --runInBand
+```
+
+This will open the browser and produce verbose logs.
+
+The tests will run under `.tmp` folder and can be debugged easily. For example:
+
+```
+> .tmp/javascript/features/css-inclution >> node /{project path}/yoshi/packages/yoshi/bin/yoshi-cli.js build
+```
+
+```
+> .tmp/javascript/features/css-inclution >> node /{project path}/yoshi/packages/yoshi/bin/yoshi-cli.js start --server="./dist/server"
+```
+
+## Running test:legacy:{commandName|other} Locally
 
 Yoshi's test suite, in its current state, takes a long time to complete and (unfortunately) contains flaky tests. Therefore, we advise limiting the scope of the test execution in your local environment to the tests that are most affected by your changes. Limit the scope using [mocha's `only` function](https://mochajs.org/#exclusive-tests).
 
 After the limited scope of tests passes locally you can push your changes and have the `Pull Request CI Server` build and run all of the tests as the test suite is much less flaky on the [CI server](http://pullrequest-tc.dev.wixpress.com/viewType.html?buildTypeId=FedInfra_Yoshi).
 
-### Test Phases
+#### Test Phases
 
 In order to simplify Yoshi's tests we created a helper utility called [`test-phases`](https://github.com/wix/yoshi/blob/master/test/helpers/test-phases.js). This utility is in charge of setting up the environment for the test (`package.json`, `pom.xml`, source files, etc) in a temp directory, running Yoshi's commands (`start`, `build`, `lint`, etc) and asserting against the result (stdout, file content, exit code, etc).
 You can see an example usage of `test-phases` [here](https://github.com/wix/yoshi/blob/master/packages/yoshi/test/lint.spec.js).
 
-### Debugging Tests
+#### Debugging Tests
 
 You might run into an issue where you have a test that seems to run and then hang (neither fail nor pass).
 This usually means that there was an error but you can't see it.
